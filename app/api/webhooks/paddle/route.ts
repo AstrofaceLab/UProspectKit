@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Configuration error" }, { status: 400 });
     }
 
-    const event = paddle.webhooks.unmarshal(rawBody, secret, signature);
+    const event = await paddle.webhooks.unmarshal(rawBody, secret, signature);
     
     if (!event) {
       return NextResponse.json({ error: "Invalid event" }, { status: 400 });
