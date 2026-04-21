@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Providers from "@/components/Providers";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "UProspectKit | AI-Powered Upwork Proposal Generator",
@@ -25,7 +27,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <head>
+        <Script
+          src="https://cdn.paddle.com/paddle/v2/paddle.js"
+          strategy="beforeInteractive"
+        />
+      </head>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
+
+

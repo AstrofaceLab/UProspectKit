@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import * as Select from "@radix-ui/react-select";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -362,6 +363,7 @@ function LogoIcon() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [jobPost, setJobPost] = useState("");
   const [tone, setTone] = useState("Professional");
   const [experience, setExperience] = useState("Expert");
@@ -370,46 +372,57 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedProposal[]>([]);
   const [saveFeedback, setSaveFeedback] = useState(false);
-  const [usageCount, setUsageCount] = useState(0);
-  const [isProUser, setIsProUser] = useState(false);
+  
+  const usageCount = session?.user?.usageCount || 0;
+  const isProUser = session?.user?.isPro || false;
   const [showPaywall, setShowPaywall] = useState(false);
 
   const FREE_LIMIT = 5;
 
-  // Load history and monetization state from localStorage on mount
+  // Initialize Paddle v2 on mount
   useEffect(() => {
-    const saved = localStorage.getItem("proposal_history");
-    if (saved) {
-      try {
-        setHistory(JSON.parse(saved));
-      } catch (err) {
-        console.error("Failed to parse history", err);
-      }
+    if (typeof window !== "undefined" && (window as any).Paddle) {
+      (window as any).Paddle.Initialize({
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+        environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || "production",
+      });
     }
-
-    const usage = localStorage.getItem("usage_count");
-    if (usage) setUsageCount(parseInt(usage, 10));
-
-    const isPro = localStorage.getItem("is_pro_user");
-    if (isPro === "true") setIsProUser(true);
   }, []);
 
-  const handleSave = () => {
-    if (!result) return;
+  // Load history from API on mount/session change
+  useEffect(() => {
+    if (session) {
+      fetch("/api/proposals")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) setHistory(data);
+        })
+        .catch((err) => console.error("Failed to fetch history", err));
+    }
+  }, [session]);
 
-    const newSaved: SavedProposal = {
-      id: Math.random().toString(36).substring(2, 9),
-      jobPost,
-      ...result,
-      createdAt: Date.now(),
-    };
+  const handleSave = async () => {
+    if (!result || !session) return;
 
-    const updatedHistory = [newSaved, ...history];
-    setHistory(updatedHistory);
-    localStorage.setItem("proposal_history", JSON.stringify(updatedHistory));
+    try {
+      const response = await fetch("/api/proposals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobPost,
+          ...result,
+        }),
+      });
 
-    setSaveFeedback(true);
-    setTimeout(() => setSaveFeedback(false), 2000);
+      if (!response.ok) throw new Error("Failed to save");
+
+      const savedProposal = await response.json();
+      setHistory([savedProposal, ...history]);
+      setSaveFeedback(true);
+      setTimeout(() => setSaveFeedback(false), 2000);
+    } catch (err) {
+      console.error("Save error:", err);
+    }
   };
 
   const handleLoadHistory = (saved: SavedProposal) => {
@@ -426,6 +439,11 @@ export default function Home() {
     if (!jobPost.trim()) return;
 
     // Check limit
+    if (!session) {
+      setError("Please sign in to generate proposals");
+      return;
+    }
+
     if (!isProUser && usageCount >= FREE_LIMIT) {
       setShowPaywall(true);
       return;
@@ -449,11 +467,6 @@ export default function Home() {
 
       const data: ProposalResult = await response.json();
       setResult(data);
-
-      // Increment usage
-      const newCount = usageCount + 1;
-      setUsageCount(newCount);
-      localStorage.setItem("usage_count", newCount.toString());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
     } finally {
@@ -462,23 +475,29 @@ export default function Home() {
   };
 
   const handleUpgrade = () => {
-    // This is where you'd redirect to Stripe Payment Link
-    // For now, we simulate the redirect and set the flag as requested
-    localStorage.setItem("is_pro_user", "true");
-    
-    // In a real app, you would redirect:
-    window.open("https://buy.stripe.com/test_6oE0123456789", "_blank");
-    
-    // For this MVP demo, we'll just set it immediately so the user can see it works
-    setIsProUser(true);
-    setShowPaywall(false);
+    if (typeof window !== "undefined" && (window as any).Paddle && session?.user?.id) {
+      (window as any).Paddle.Checkout.open({
+        items: [
+          {
+            priceId: process.env.NEXT_PUBLIC_PADDLE_PRODUCT_ID!,
+            quantity: 1,
+          },
+        ],
+        customData: {
+          userId: session.user.id,
+        },
+      });
+    } else {
+      signIn("google");
+    }
   };
 
   const isDisabled = loading || !jobPost.trim();
 
   return (
-    <div
-      style={{
+    <>
+      <div
+        style={{
         minHeight: "100vh",
         background: "var(--bg-base)",
         display: "flex",
@@ -533,9 +552,53 @@ export default function Home() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "6px",
+            gap: "16px",
           }}
         >
+          {status === "authenticated" ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+                {session.user?.email}
+              </span>
+              <button
+                onClick={() => signOut()}
+                style={{
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "11px",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn("google")}
+              style={{
+                background: "var(--accent)",
+                border: "none",
+                borderRadius: "6px",
+                padding: "6px 14px",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#1a1a1a",
+                cursor: "pointer",
+              }}
+            >
+              Sign In
+            </button>
+          )}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
           <span
             style={{
               width: "6px",
@@ -555,6 +618,7 @@ export default function Home() {
             API ready
           </span>
         </div>
+      </div>
       </header>
 
       {/* ── Main layout ── */}
@@ -1391,5 +1455,6 @@ export default function Home() {
         </div>
       )}
     </div>
+    </>
   );
 }

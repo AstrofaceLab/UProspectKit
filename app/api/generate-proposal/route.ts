@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = "gpt-4o-mini";
+const MODEL = "gpt-5.0-mini";
+const FREE_LIMIT = 5;
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized. Please sign in." }, { status: 401 });
+    }
+
     const { jobPost, tone, experience } = await req.json();
 
     if (!jobPost || jobPost.length < 20) {
@@ -18,78 +27,117 @@ export async function POST(req: Request) {
       );
     }
 
-    // PHASE 1: DRAFT GENERATION
-    const draftCompletion = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: "You are a skilled freelancer writing an Upwork proposal. Write a clear, relevant proposal based strictly on the job post. Avoid being overly generic, but focus on getting a solid draft down.",
-        },
-        {
-          role: "user",
-          content: `Write an Upwork proposal based on this job post.\n\nJob post:\n${jobPost}\n\nTone:\n${tone}\n\nExperience level:\n${experience}\n\nReturn EXACT format:\n\nHOOK:\nPROPOSAL:\nFOLLOW_UP:`,
-        },
-      ],
-      temperature: 0.7,
+    // ─── Usage Controls ───
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isPro: true, usageCount: true },
     });
 
-    const draftText = draftCompletion.choices[0].message.content || "";
+    if (!user) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
 
-    // PHASE 2: REWRITE (IMPROVEMENT)
-    const improvedCompletion = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: "Improve this proposal: Make it more specific to the job post. Remove vague or generic phrases. Tighten wording. Keep it concise. Do NOT increase length. Keep the same structure: HOOK / PROPOSAL / FOLLOW_UP",
-        },
-        {
-          role: "user",
-          content: `Draft to improve:\n${draftText}\n\nOriginal job post:\n${jobPost}`,
-        },
-      ],
-      temperature: 0.7,
-    });
-
-    const improvedText = improvedCompletion.choices[0].message.content || "";
-
-    // PHASE 3: HUMANIZATION
-    const humanizedCompletion = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content: "Rewrite this to sound like a real human freelancer. Slightly informal, natural phrasing, not overly polished, vary sentence structure, allow slight imperfections, avoid robotic tone. Make it feel like a quick, thoughtful response—not a formal application. Keep structure: HOOK / PROPOSAL / FOLLOW_UP",
-        },
-        {
-          role: "user",
-          content: `Proposal to humanize:\n${improvedText}`,
-        },
-      ],
-      temperature: 0.7,
-    });
-
-    const finalText = humanizedCompletion.choices[0].message.content || "";
-
-    // PARSING
-    const hook = finalText.split("HOOK:")[1]?.split("PROPOSAL:")[0]?.trim() || "";
-    const proposal = finalText.split("PROPOSAL:")[1]?.split("FOLLOW_UP:")[0]?.trim() || "";
-    const followUp = finalText.split("FOLLOW_UP:")[1]?.trim() || "";
-
-    if (!hook || !proposal || !followUp) {
-      console.error("Parsing failure. Raw output:", finalText);
+    if (!user.isPro && user.usageCount >= FREE_LIMIT) {
       return NextResponse.json(
-        { error: "Failed to parse AI response", raw: finalText },
-        { status: 500 }
+        { error: "Free usage limit exceeded. Please upgrade to Pro." },
+        { status: 403 }
       );
     }
 
-    return NextResponse.json({
-      hook,
-      proposal,
-      followUp,
-    });
+    // ─── 4-Step Humanization Pipeline ───
+    let attempt = 0;
+    const maxRetries = 2;
+    let lastError = null;
+
+    while (attempt <= maxRetries) {
+      try {
+        // Step 1: Deconstruction & Strategy
+        const strategyRes = await openai.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { 
+              role: "system", 
+              content: "You are a cynical, highly-experienced Upwork freelancer. Read the job post, identify the core pain point, and extract only the actual technical requirements. Ignore fluff." 
+            },
+            { role: "user", content: jobPost }
+          ],
+          temperature: 0.3,
+        });
+        const strategy = strategyRes.choices[0].message.content;
+
+        // Step 2: The Raw Draft
+        const draftRes = await openai.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { 
+              role: "system", 
+              content: `Write a raw Upwork proposal based on the strategy. Tone: ${tone}. Experience: ${experience}. Focus on technical competence.` 
+            },
+            { role: "user", content: strategy || "" }
+          ],
+          temperature: 0.7,
+        });
+        const rawDraft = draftRes.choices[0].message.content;
+
+        // Step 3: The De-Botification Layer
+        const filterRes = await openai.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { 
+              role: "system", 
+              content: `You are a humanization editor. Rewrite the draft. STRICT NEGATIVE CONSTRAINTS:
+- NO hyphenated buzzwords (e.g., remove 'top-notch', 'game-changer', 'fast-paced', 'results-driven').
+- NO bullet point lists unless the client explicitly asked for a checklist.
+- NO introductory filler (e.g., 'I hope this message finds you well', 'I am writing to apply').
+- NO overly enthusiastic punctuation. Remove all exclamation marks (!). Use periods.
+- NO robotic transitional phrases (e.g., 'Moreover', 'Furthermore', 'Delve into', 'In conclusion').` 
+            },
+            { role: "user", content: rawDraft || "" }
+          ],
+          temperature: 0.5,
+        });
+        const filteredDraft = filterRes.choices[0].message.content;
+
+        // Step 4: The Casual Polish (Final JSON Output)
+        const finalRes = await openai.chat.completions.create({
+          model: MODEL,
+          messages: [
+            { 
+              role: "system", 
+              content: `Make this sound like it was typed quickly by a confident expert on a MacBook. 
+- Use simple, direct language. 
+- Vary sentence length—use very short sentences next to longer ones. 
+- Start the hook immediately with a direct answer to their problem.
+- Keep the follow-up to exactly one casual sentence.
+Return the final output as a strict JSON object: { "hook": "...", "proposal": "...", "followUp": "..." }.` 
+            },
+            { role: "user", content: filteredDraft || "" }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.8,
+        });
+
+        const resultJson = JSON.parse(finalRes.choices[0].message.content || "{}");
+        
+        if (resultJson.hook && resultJson.proposal && resultJson.followUp) {
+          // Success: Update usage count
+          await prisma.user.update({
+            where: { id: session.user.id },
+            data: { usageCount: { increment: 1 } },
+          });
+
+          return NextResponse.json(resultJson);
+        }
+
+        throw new Error("AI returned malformed JSON structure");
+      } catch (err) {
+        lastError = err;
+        attempt++;
+        console.warn(`AI Pipeline attempt ${attempt} failed. Retrying...`, err);
+      }
+    }
+
+    throw lastError || new Error("AI Pipeline failed after maximum retries");
 
   } catch (error: any) {
     console.error("Pipeline Error:", error);
