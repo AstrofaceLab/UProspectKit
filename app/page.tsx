@@ -247,7 +247,7 @@ function OutputCard({
         <CopyButton text={content ?? ""} disabled={!content || loading} />
       </div>
 
-      <div style={{ padding: "24px" }}>
+      <div style={{ padding: "clamp(16px, 4vw, 24px)" }}>
         {loading ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div className="shimmer" style={{ height: "16px", borderRadius: "4px", width: "95%" }} />
@@ -499,7 +499,18 @@ export default function Home() {
           zIndex: 100,
         }}
       >
-        <div className="container" style={{ height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div 
+          className="container" 
+          style={{ 
+            minHeight: "64px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            paddingTop: "12px",
+            paddingBottom: "12px",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <LogoIcon />
             <span
@@ -515,10 +526,18 @@ export default function Home() {
             </span>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <div 
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "16px",
+              flexWrap: "wrap",
+              justifyContent: "center"
+            }}
+          >
             {status === "authenticated" ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+                <span style={{ fontSize: "11px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
                   {session.user?.email}
                 </span>
                 <button
@@ -527,8 +546,8 @@ export default function Home() {
                     background: "transparent",
                     border: "1px solid var(--border)",
                     borderRadius: "var(--radius-sm)",
-                    padding: "6px 14px",
-                    fontSize: "12px",
+                    padding: "6px 12px",
+                    fontSize: "11px",
                     fontWeight: 600,
                     color: "var(--text-secondary)",
                     cursor: "pointer",
@@ -548,35 +567,39 @@ export default function Home() {
                   border: "none",
                   borderRadius: "var(--radius-sm)",
                   padding: "8px 18px",
-                  fontSize: "13px",
+                  fontSize: "12px",
                   fontWeight: 700,
                   color: "#000",
                   cursor: "pointer",
                   transition: "all 0.2s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"}
-                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.transform = "translateY(0)"}
               >
                 Sign In
               </button>
             )}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "6px", height: "6px", background: "#4ade80", borderRadius: "50%", boxShadow: "0 0 10px rgba(74, 222, 128, 0.4)" }} />
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase" }}>System Active</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase" }}>Active</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* ── Main layout ── */}
-      <main className="container" style={{ paddingTop: "64px", paddingBottom: "100px" }}>
+      <main 
+        className="container" 
+        style={{ 
+          paddingTop: "clamp(32px, 8vw, 64px)", 
+          paddingBottom: "100px" 
+        }}
+      >
         {/* Page title */}
-        <div style={{ marginBottom: "56px", textAlign: "center" }}>
+        <div style={{ marginBottom: "clamp(32px, 8vw, 56px)", textAlign: "center" }}>
           <h1
             style={{
               fontFamily: "var(--font-display)",
               fontWeight: 800,
-              fontSize: "48px",
+              fontSize: "clamp(32px, 6vw, 48px)",
               color: "var(--text-primary)",
               margin: "0 0 16px",
               letterSpacing: "-0.03em",
@@ -588,7 +611,7 @@ export default function Home() {
           <p
             style={{
               color: "var(--text-secondary)",
-              fontSize: "18px",
+              fontSize: "clamp(15px, 2vw, 18px)",
               fontFamily: "var(--font-body)",
               maxWidth: "600px",
               margin: "0 auto",
@@ -607,6 +630,8 @@ export default function Home() {
             gridTemplateColumns: "400px 1fr",
             gap: "32px",
             alignItems: "start",
+            width: "100%",
+            boxSizing: "border-box",
           }}
         >
           {/* ── LEFT PANEL ── */}
@@ -643,8 +668,8 @@ export default function Home() {
                 disabled={loading}
                 style={{
                   width: "100%",
-                  minHeight: "320px",
-                  padding: "20px",
+                  minHeight: "clamp(240px, 40vh, 320px)",
+                  padding: "clamp(16px, 4vw, 20px)",
                   background: "var(--bg-input)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
@@ -654,6 +679,7 @@ export default function Home() {
                   opacity: loading ? 0.6 : 1,
                   transition: "all 0.3s ease",
                   outline: "none",
+                  boxSizing: "border-box",
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = "var(--accent)";
@@ -702,7 +728,7 @@ export default function Home() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
                 gap: "14px",
               }}
             >
@@ -1128,7 +1154,7 @@ export default function Home() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(clamp(280px, 100%, 340px), 1fr))",
                 gap: "24px",
               }}
             >
@@ -1217,30 +1243,31 @@ export default function Home() {
           background: "rgba(255,255,255,0.01)",
         }}
       >
-        <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "24px" }}>
           <span
             style={{
               fontFamily: "var(--font-mono)",
-              fontSize: "11px",
+              fontSize: "10px",
               color: "var(--text-muted)",
               letterSpacing: "0.05em",
+              textAlign: "center",
+              width: "100%",
+              maxWidth: "none",
             }}
           >
             © 2026 UPROSPECTKIT · BUILT FOR PROFESSIONALS
           </span>
-          <div style={{ display: "flex", gap: "24px" }}>
+          <div style={{ display: "flex", gap: "24px", justifyContent: "center", width: "100%" }}>
             {["Terms", "Privacy", "Support"].map((item) => (
               <span
                 key={item}
                 style={{
                   fontFamily: "var(--font-mono)",
-                  fontSize: "11px",
+                  fontSize: "10px",
                   color: "var(--text-muted)",
                   cursor: "pointer",
                   transition: "color 0.2s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"}
-                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"}
               >
                 {item.toUpperCase()}
               </span>
@@ -1249,64 +1276,68 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* ── PAYWALL MODAL ── */}
+      {/* ── Paywall Modal ── */}
       {showPaywall && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.9)",
+            background: "rgba(0, 0, 0, 0.95)",
             backdropFilter: "blur(20px)",
             zIndex: 1000,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "24px",
+            padding: "20px",
           }}
           onClick={() => setShowPaywall(false)}
         >
           <div
-            className="glass-panel"
+            className="glass-panel animate-fade"
             style={{
               background: "var(--bg-surface)",
-              padding: "48px",
+              padding: "clamp(32px, 8vw, 48px)",
               maxWidth: "500px",
               width: "100%",
               textAlign: "center",
               boxShadow: "0 40px 100px rgba(0,0,0,0.9)",
               position: "relative",
-              overflow: "hidden"
+              overflow: "hidden",
+              boxSizing: "border-box",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Ambient Glow */}
             <div style={{ position: "absolute", top: "-50%", left: "-50%", width: "200%", height: "200%", background: "radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)", pointerEvents: "none", zIndex: -1 }} />
 
-            <div 
+            <div
               style={{
-                width: "64px",
-                height: "64px",
+                width: "clamp(56px, 12vw, 72px)",
+                height: "clamp(56px, 12vw, 72px)",
                 background: "var(--accent-muted)",
                 borderRadius: "20px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "0 auto 24px",
-                color: "var(--accent)"
+                color: "var(--accent)",
+                border: "1px solid var(--border)",
               }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
             </div>
 
             <h2
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "32px",
+                fontSize: "clamp(24px, 6vw, 32px)",
                 fontWeight: 800,
                 color: "var(--text-primary)",
-                marginBottom: "16px",
+                marginBottom: "12px",
                 letterSpacing: "-0.03em",
+                lineHeight: 1.1,
               }}
             >
               Limit Reached
@@ -1314,13 +1345,13 @@ export default function Home() {
             <p
               style={{
                 color: "var(--text-secondary)",
-                fontSize: "17px",
+                fontSize: "clamp(14px, 4vw, 16px)",
                 lineHeight: "1.6",
-                marginBottom: "40px",
+                marginBottom: "32px",
                 fontFamily: "var(--font-body)",
               }}
             >
-              You've hit the free generation limit. Upgrade to our Professional plan for unlimited AI access and priority features.
+              You've hit the free generation limit. Upgrade to Pro for unlimited AI access and priority features.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1329,12 +1360,12 @@ export default function Home() {
                 disabled={upgrading}
                 style={{
                   width: "100%",
-                  padding: "20px",
+                  padding: "18px",
                   background: upgrading ? "var(--bg-input)" : "var(--accent)",
                   color: "#000",
                   border: "none",
                   borderRadius: "var(--radius-md)",
-                  fontSize: "16px",
+                  fontSize: "15px",
                   fontWeight: 800,
                   fontFamily: "var(--font-display)",
                   cursor: upgrading ? "not-allowed" : "pointer",
@@ -1343,23 +1374,11 @@ export default function Home() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "12px",
-                }}
-                onMouseEnter={(e) => {
-                  if (!upgrading) {
-                    (e.currentTarget as HTMLElement).style.background = "#fff";
-                    (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!upgrading) {
-                    (e.currentTarget as HTMLElement).style.background = "var(--accent)";
-                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-                  }
+                  gap: "10px",
                 }}
               >
                 {upgrading && <span className="spinner" />}
-                {upgrading ? "Opening Checkout..." : "Unlock Pro Now — $9/mo"}
+                {upgrading ? "Loading..." : "Unlock Pro — $9/mo"}
               </button>
               <button
                 onClick={() => setShowPaywall(false)}
@@ -1368,27 +1387,25 @@ export default function Home() {
                   background: "transparent",
                   color: "var(--text-muted)",
                   border: "none",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   fontWeight: 600,
                   fontFamily: "var(--font-mono)",
                   cursor: "pointer",
                   transition: "color 0.2s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"}
-                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"}
               >
                 DISMISS
               </button>
             </div>
-            
-            <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
-              <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-                {["Unlimited AI", "History Sync", "Priority Support"].map((feat) => (
+
+            <div style={{ marginTop: "24px", paddingTop: "20px", borderTop: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
+                {["Unlimited AI", "Sync", "Priority"].map((feat) => (
                   <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                       <path d="M10 3L4.5 8.5L2 6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontWeight: 500 }}>{feat.toUpperCase()}</span>
+                    <span style={{ fontSize: "9px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontWeight: 500 }}>{feat.toUpperCase()}</span>
                   </div>
                 ))}
               </div>
