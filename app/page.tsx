@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import * as Select from "@radix-ui/react-select";
 import { useSession, signIn, signOut } from "next-auth/react";
+import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,8 +141,10 @@ function CopyButton({ text, disabled }: { text: string; disabled: boolean }) {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      toast.success("Copied to clipboard");
       setTimeout(() => setCopied(false), 1500);
     } catch (err) {
+      toast.error("Failed to copy");
       console.error("Failed to copy!", err);
     }
   };
@@ -372,6 +375,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SavedProposal[]>([]);
   const [saveFeedback, setSaveFeedback] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
   
   const usageCount = session?.user?.usageCount || 0;
   const isProUser = session?.user?.isPro || false;
@@ -402,7 +407,8 @@ export default function Home() {
   }, [session]);
 
   const handleSave = async () => {
-    if (!result || !session) return;
+    if (!result || !session || saving) return;
+    setSaving(true);
 
     try {
       const response = await fetch("/api/proposals", {
@@ -419,9 +425,13 @@ export default function Home() {
       const savedProposal = await response.json();
       setHistory([savedProposal, ...history]);
       setSaveFeedback(true);
+      toast.success("Proposal saved");
       setTimeout(() => setSaveFeedback(false), 2000);
     } catch (err) {
+      toast.error("Failed to save proposal");
       console.error("Save error:", err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -436,10 +446,11 @@ export default function Home() {
   };
 
   const handleGenerate = async () => {
-    if (!jobPost.trim()) return;
+    if (!jobPost.trim() || loading) return;
 
     // Check limit
     if (!session) {
+      toast.error("Please sign in to generate proposals");
       setError("Please sign in to generate proposals");
       return;
     }
@@ -467,28 +478,38 @@ export default function Home() {
 
       const data: ProposalResult = await response.json();
       setResult(data);
+      toast.success("Proposal generated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unexpected error");
+      const msg = err instanceof Error ? err.message : "Unexpected error";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
   const handleUpgrade = () => {
-    if (typeof window !== "undefined" && (window as any).Paddle && session?.user?.id) {
-      (window as any).Paddle.Checkout.open({
-        items: [
-          {
-            priceId: process.env.NEXT_PUBLIC_PADDLE_PRODUCT_ID!,
-            quantity: 1,
+    if (upgrading) return;
+    setUpgrading(true);
+    try {
+      if (typeof window !== "undefined" && (window as any).Paddle && session?.user?.id) {
+        (window as any).Paddle.Checkout.open({
+          items: [
+            {
+              priceId: process.env.NEXT_PUBLIC_PADDLE_PRODUCT_ID!,
+              quantity: 1,
+            },
+          ],
+          customData: {
+            userId: session.user.id,
           },
-        ],
-        customData: {
-          userId: session.user.id,
-        },
-      });
-    } else {
-      signIn("google");
+        });
+      } else {
+        signIn("google");
+      }
+    } finally {
+      // Reset after a short delay (checkout opens in overlay)
+      setTimeout(() => setUpgrading(false), 2000);
     }
   };
 
@@ -663,6 +684,7 @@ export default function Home() {
 
         {/* 2-column layout */}
         <div
+          className="main-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
@@ -968,6 +990,7 @@ export default function Home() {
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     onClick={handleSave}
+                    disabled={saving}
                     style={{
                       background: saveFeedback ? "rgba(74, 222, 128, 0.1)" : "var(--bg-card)",
                       border: `1px solid ${saveFeedback ? "#4ade80" : "var(--border)"}`,
@@ -976,24 +999,30 @@ export default function Home() {
                       color: saveFeedback ? "#4ade80" : "var(--text-secondary)",
                       fontSize: "12px",
                       fontFamily: "var(--font-mono)",
-                      cursor: "pointer",
+                      cursor: saving ? "not-allowed" : "pointer",
+                      opacity: saving ? 0.6 : 1,
                       display: "flex",
                       alignItems: "center",
                       gap: "5px",
                       transition: "all 0.2s ease",
                     }}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                      <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    {saveFeedback ? "Saved!" : "Save Proposal"}
+                    {saving ? (
+                      <span className="spinner" style={{ width: "12px", height: "12px", borderWidth: "1.5px" }} />
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                      </svg>
+                    )}
+                    {saving ? "Saving..." : saveFeedback ? "Saved!" : "Save Proposal"}
                   </button>
                   <button
                     onClick={() => {
                       const text = `HOOK\n${result.hook}\n\nPROPOSAL\n${result.proposal}\n\nFOLLOW-UP\n${result.followUp}`;
                       navigator.clipboard.writeText(text);
+                      toast.success("All sections copied");
                     }}
                     style={{
                       background: "var(--bg-card)",
@@ -1393,29 +1422,39 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <button
                 onClick={handleUpgrade}
+                disabled={upgrading}
                 style={{
                   width: "100%",
                   padding: "16px",
-                  background: "var(--accent)",
-                  color: "#0f0e0d",
+                  background: upgrading ? "var(--bg-input)" : "var(--accent)",
+                  color: upgrading ? "var(--text-muted)" : "#0f0e0d",
                   border: "none",
                   borderRadius: "12px",
                   fontSize: "16px",
                   fontWeight: 700,
                   fontFamily: "var(--font-display)",
-                  cursor: "pointer",
-                  transition: "all 0.2s"
+                  cursor: upgrading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px"
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "white";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                  if (!upgrading) {
+                    (e.currentTarget as HTMLElement).style.background = "white";
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "var(--accent)";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                  if (!upgrading) {
+                    (e.currentTarget as HTMLElement).style.background = "var(--accent)";
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                  }
                 }}
               >
-                Upgrade Now
+                {upgrading && <span className="spinner" />}
+                {upgrading ? "Opening checkout..." : "Upgrade Now"}
               </button>
               <button
                 onClick={() => setShowPaywall(false)}

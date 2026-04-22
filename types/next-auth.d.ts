@@ -5,12 +5,12 @@ declare module "next-auth" {
     user: {
       id: string;
       isPro: boolean;
-      usageCount: Int;
+      usageCount: number;
     } & DefaultSession["user"];
   }
 
   interface User {
     isPro: boolean;
-    usageCount: Int;
+    usageCount: number;
   }
 }
