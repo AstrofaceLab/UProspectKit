@@ -1254,49 +1254,32 @@ export default function Home() {
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(15, 14, 13, 0.85)",
-            backdropFilter: "blur(12px)",
-            zIndex: 100,
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(20px)",
+            zIndex: 1000,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: "24px",
-            animation: "fadeUp 0.3s ease-out"
           }}
+          onClick={() => setShowPaywall(false)}
         >
           <div
+            className="glass-panel"
             style={{
               background: "var(--bg-surface)",
-              border: "1px solid var(--accent)",
-              borderRadius: "24px",
-              padding: "40px",
-              maxWidth: "480px",
+              padding: "48px",
+              maxWidth: "500px",
               width: "100%",
               textAlign: "center",
-              boxShadow: "0 24px 64px rgba(232, 160, 32, 0.15)",
+              boxShadow: "0 40px 100px rgba(0,0,0,0.9)",
               position: "relative",
               overflow: "hidden"
             }}
           >
-            {/* Background glow */}
-            <div 
-              style={{
-                position: "absolute",
-                top: "-100px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: "200px",
-                height: "200px",
-                background: "var(--accent)",
-                filter: "blur(100px)",
-                opacity: 0.15,
-                pointerEvents: "none"
-              }}
-            />
+            {/* Ambient Glow */}
+            <div style={{ position: "absolute", top: "-50%", left: "-50%", width: "200%", height: "200%", background: "radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)", pointerEvents: "none", zIndex: -1 }} />
 
             <div 
               style={{
@@ -1323,22 +1306,21 @@ export default function Home() {
                 fontWeight: 800,
                 color: "var(--text-primary)",
                 marginBottom: "16px",
-                lineHeight: 1.1,
-                letterSpacing: "-0.02em"
+                letterSpacing: "-0.03em",
               }}
             >
-              Upgrade to continue generating proposals
+              Limit Reached
             </h2>
             <p
               style={{
-                fontFamily: "var(--font-body)",
-                fontSize: "17px",
                 color: "var(--text-secondary)",
-                marginBottom: "32px",
-                lineHeight: 1.6
+                fontSize: "17px",
+                lineHeight: "1.6",
+                marginBottom: "40px",
+                fontFamily: "var(--font-body)",
               }}
             >
-              You've reached your free limit. Upgrade for unlimited access and start winning more jobs today.
+              You've hit the free generation limit. Upgrade to our Professional plan for unlimited AI access and priority features.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1347,24 +1329,25 @@ export default function Home() {
                 disabled={upgrading}
                 style={{
                   width: "100%",
-                  padding: "16px",
+                  padding: "20px",
                   background: upgrading ? "var(--bg-input)" : "var(--accent)",
-                  color: upgrading ? "var(--text-muted)" : "#0f0e0d",
+                  color: "#000",
                   border: "none",
-                  borderRadius: "12px",
+                  borderRadius: "var(--radius-md)",
                   fontSize: "16px",
-                  fontWeight: 700,
+                  fontWeight: 800,
                   fontFamily: "var(--font-display)",
                   cursor: upgrading ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 10px 30px var(--accent-glow)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px"
+                  gap: "12px",
                 }}
                 onMouseEnter={(e) => {
                   if (!upgrading) {
-                    (e.currentTarget as HTMLElement).style.background = "white";
+                    (e.currentTarget as HTMLElement).style.background = "#fff";
                     (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
                   }
                 }}
@@ -1376,38 +1359,36 @@ export default function Home() {
                 }}
               >
                 {upgrading && <span className="spinner" />}
-                {upgrading ? "Opening checkout..." : "Upgrade Now"}
+                {upgrading ? "Opening Checkout..." : "Unlock Pro Now — $9/mo"}
               </button>
               <button
                 onClick={() => setShowPaywall(false)}
                 style={{
-                  width: "100%",
                   padding: "12px",
                   background: "transparent",
                   color: "var(--text-muted)",
                   border: "none",
-                  borderRadius: "12px",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  fontFamily: "var(--font-body)",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  fontFamily: "var(--font-mono)",
                   cursor: "pointer",
-                  transition: "all 0.2s"
+                  transition: "color 0.2s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)"}
+                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"}
                 onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"}
               >
-                Maybe later
+                DISMISS
               </button>
             </div>
             
-            <div style={{ marginTop: "24px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
+            <div style={{ marginTop: "32px", paddingTop: "24px", borderTop: "1px solid var(--border)" }}>
               <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-                {["Unlimited AI", "Priority Support", "History Sync"].map((feat) => (
+                {["Unlimited AI", "History Sync", "Priority Support"].map((feat) => (
                   <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M10 3L4.5 8.5L2 6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{feat}</span>
+                    <span style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", fontWeight: 500 }}>{feat.toUpperCase()}</span>
                   </div>
                 ))}
               </div>
