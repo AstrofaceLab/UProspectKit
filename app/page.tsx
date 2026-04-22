@@ -389,7 +389,6 @@ export default function Home() {
     if (typeof window !== "undefined" && (window as any).Paddle) {
       (window as any).Paddle.Initialize({
         token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-        environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT || "production",
       });
     }
   }, []);
