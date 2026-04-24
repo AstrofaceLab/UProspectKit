@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import * as Select from "@radix-ui/react-select";
 import { useSession, signIn, signOut } from "next-auth/react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1232,6 +1233,46 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* ── SEO Content Section (Visually subtle but crawlable) ── */}
+        <section 
+          style={{ 
+            marginTop: "120px", 
+            padding: "60px 0", 
+            borderTop: "1px solid var(--border)",
+            opacity: 0.8
+          }}
+        >
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "24px" }}>
+              How UProspectKit Helps You Win More Upwork Jobs
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "32px", color: "var(--text-secondary)", fontFamily: "var(--font-body)", fontSize: "14px", lineHeight: "1.6" }}>
+              <div>
+                <h3 style={{ color: "var(--accent)", fontSize: "16px", marginBottom: "8px" }}>AI-Powered Proposals</h3>
+                <p>Our advanced AI analyzes Upwork job descriptions to generate personalized, high-converting proposals. Stop wasting hours writing and start winning more clients.</p>
+              </div>
+              <div>
+                <h3 style={{ color: "var(--accent)", fontSize: "16px", marginBottom: "8px" }}>Customizable Tones</h3>
+                <p>Whether you need a professional, conversational, or confident tone, UProspectKit adjusts its writing style to match your personal brand and the client's needs.</p>
+              </div>
+            </div>
+
+            <div style={{ marginTop: "48px" }}>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: 700, color: "var(--text-primary)", marginBottom: "16px" }}>Frequently Asked Questions</h2>
+              <dl style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div>
+                  <dt style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: "4px" }}>Is it safe to use AI for Upwork proposals?</dt>
+                  <dd style={{ color: "var(--text-secondary)", fontSize: "14px" }}>Yes! UProspectKit generates human-sounding content that you can refine. It acts as a powerful draft generator to help you express your value more effectively.</dd>
+                </div>
+                <div>
+                  <dt style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: "4px" }}>Can I save my generated proposals?</dt>
+                  <dd style={{ color: "var(--text-secondary)", fontSize: "14px" }}>Absolutely. UProspectKit includes a history feature so you can restore and reuse successful proposal structures for future jobs.</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* ── Footer ── */}
@@ -1258,19 +1299,28 @@ export default function Home() {
             © 2026 UPROSPECTKIT · BUILT FOR PROFESSIONALS
           </span>
           <div style={{ display: "flex", gap: "24px", justifyContent: "center", width: "100%" }}>
-            {["Terms", "Privacy", "Support"].map((item) => (
-              <span
-                key={item}
+            {[
+              { label: "Terms", href: "/terms-of-service" },
+              { label: "Privacy", href: "/privacy-policy" },
+              { label: "Refunds", href: "/refund-policy" },
+              { label: "Support", href: "mailto:support@uprospectkit.com" }
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   color: "var(--text-muted)",
+                  textDecoration: "none",
                   cursor: "pointer",
                   transition: "color 0.2s",
                 }}
+                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"}
+                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = "var(--text-muted)"}
               >
-                {item.toUpperCase()}
-              </span>
+                {item.label.toUpperCase()}
+              </Link>
             ))}
           </div>
         </div>
