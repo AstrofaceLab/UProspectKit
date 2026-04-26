@@ -1094,55 +1094,37 @@ export default function Home() {
             )}
           </div>
         </div>
-
-        {/* ── SAVED PROPOSALS ── */}
         {history.length > 0 && (
           <div style={{ marginTop: "100px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "40px" }}> {/* Increased from 32px */}
-            <h2
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 800,
-                fontSize: "24px",
-                color: "var(--text-primary)",
-                margin: 0,
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Saved Proposals
-            </h2>
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "10px",
-                fontWeight: 600,
-                color: "var(--accent)",
-                background: "var(--accent-muted)",
-                border: "1px solid var(--border)",
-                padding: "4px 10px",
-                borderRadius: "20px",
-              }}
-            >
-              {history.length} ITEMS
-            </span>
-          </div>
-
-          {history.length === 0 ? (
-            <div
-              style={{
-                padding: "60px",
-                textAlign: "center",
-                background: "var(--bg-input)",
-                border: "1px dashed var(--border)",
-                borderRadius: "var(--radius-lg)",
-                color: "var(--text-muted)",
-                fontFamily: "var(--font-body)",
-                fontSize: "15px",
-              }}
-            >
-              Your saved proposals will appear here for easy access.
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "40px" }}>
+              <h2
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: 800,
+                  fontSize: "24px",
+                  color: "var(--text-primary)",
+                  margin: 0,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Saved Proposals
+              </h2>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  color: "var(--accent)",
+                  background: "var(--accent-muted)",
+                  border: "1px solid var(--border)",
+                  padding: "4px 10px",
+                  borderRadius: "20px",
+                }}
+              >
+                {history.length} ITEMS
+              </span>
             </div>
-          ) : (
+
             <div
               style={{
                 display: "grid",
@@ -1173,7 +1155,11 @@ export default function Home() {
                         marginBottom: "8px",
                       }}
                     >
-                      {new Date(saved.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(saved.createdAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </div>
                     <p
                       style={{
