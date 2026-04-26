@@ -16,7 +16,7 @@ const openai = new OpenAI({
   maxRetries: 1,         // OpenAI SDK built-in retry
 });
 
-const MODEL = "gpt-4.1-mini";
+const MODEL = "gpt-4o-mini";
 const FREE_LIMIT = 5;
 
 // Rate limit: 10 generations per 60 seconds per user
