@@ -189,6 +189,7 @@ textarea {
   footer div {
     justify-content: center;
   }
+}
 
 /* Mobile Sticky CTA */
 @media (max-width: 768px) {
