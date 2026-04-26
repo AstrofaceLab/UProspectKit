@@ -15,21 +15,16 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, user }) => {
       if (session.user) {
         session.user.id = user.id;
-        // Fetch custom fields from DB
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { isPro: true, usageCount: true },
-        });
-        if (dbUser) {
-          session.user.isPro = dbUser.isPro;
-          session.user.usageCount = dbUser.usageCount;
-        }
+        // In database strategy, 'user' is the user from the database
+        session.user.isPro = (user as any).isPro || false;
+        session.user.usageCount = (user as any).usageCount || 0;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/", // Redirect to home if not signed in (we'll show a prompt)
+    signIn: "/",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };
