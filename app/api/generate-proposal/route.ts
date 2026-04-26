@@ -99,83 +99,51 @@ export async function POST(req: Request) {
       );
     }
 
-    // ─── 4-Step Humanization Pipeline ────────────────────────────────────
+    // ─── 2-Step Hyper-Humanization Pipeline ──────────────────────────────
     let attempt = 0;
     const maxRetries = 2;
     let lastError: Error | null = null;
 
     while (attempt <= maxRetries) {
       try {
-        // Step 1: Deconstruction & Strategy
-        const strategyRes = await openai.chat.completions.create({
+        // Step 1: The Analyst (Chain of Thought)
+        const analystRes = await openai.chat.completions.create({
           model: MODEL,
           messages: [
             {
               role: "system",
-              content:
-                "You are a cynical, highly-experienced Upwork freelancer. Read the job post, identify the core pain point, and extract only the actual technical requirements. Ignore fluff.",
+              content: "You are an elite, highly-paid freelancer on Upwork. Your goal is to write a proposal that proves you actually read the client's job post. First, silently identify the client's core pain point and exact technical requirements. Then, write the proposal. RULES: Mirror the client's specific vocabulary back to them. Do not just say you have experience; specifically state HOW you will solve their exact problem. Match the requested tone and experience level.",
             },
-            { role: "user", content: jobPost },
+            { role: "user", content: `Write the proposal draft for this job post:\n\n${jobPost}` },
           ],
-          temperature: 0.3,
+          temperature: 0.6,
         });
-        const strategy = strategyRes.choices[0].message.content;
+        const rawDraft = analystRes.choices[0].message.content;
 
-        // Step 2: The Raw Draft
-        const draftRes = await openai.chat.completions.create({
+        // Step 2: The De-Botifier (Negative Constraints)
+        const debotRes = await openai.chat.completions.create({
           model: MODEL,
           messages: [
             {
               role: "system",
-              content: `Write a raw Upwork proposal based on the strategy. Tone: ${tone || "Professional"}. Experience: ${experience || "Expert"}. Focus on technical competence.`,
+              content: "You are a strict editor. Make this draft sound like a real human typed it quickly but confidently. NEGATIVE CONSTRAINTS (STRICTLY OBEY): 1. NO hyphenated buzzwords (remove top-notch, game-changer, fast-paced, results-driven, detail-oriented). 2. NO robotic transitions (remove Furthermore, Moreover, In conclusion). 3. NO formal filler (Do not start with 'I hope this message finds you well'). 4. NO exclamation marks (!). Use periods. FORMATTING: Use simple, direct, conversational English. Vary sentence length. MUST output strictly as: HOOK: [text] PROPOSAL: [text] FOLLOW_UP: [text].",
             },
-            { role: "user", content: strategy || "" },
+            { role: "user", content: `Edit this draft to be 100% human-sounding:\n\n${rawDraft}` },
           ],
-          temperature: 0.7,
-        });
-        const rawDraft = draftRes.choices[0].message.content;
-
-        // Step 3: The De-Botification Layer
-        const filterRes = await openai.chat.completions.create({
-          model: MODEL,
-          messages: [
-            {
-              role: "system",
-              content: `You are a humanization editor. Rewrite the draft. STRICT NEGATIVE CONSTRAINTS:
-- NO hyphenated buzzwords (e.g., remove 'top-notch', 'game-changer', 'fast-paced', 'results-driven').
-- NO bullet point lists unless the client explicitly asked for a checklist.
-- NO introductory filler (e.g., 'I hope this message finds you well', 'I am writing to apply').
-- NO overly enthusiastic punctuation. Remove all exclamation marks (!). Use periods.
-- NO robotic transitional phrases (e.g., 'Moreover', 'Furthermore', 'Delve into', 'In conclusion').`,
-            },
-            { role: "user", content: rawDraft || "" },
-          ],
-          temperature: 0.5,
-        });
-        const filteredDraft = filterRes.choices[0].message.content;
-
-        // Step 4: The Casual Polish (Final JSON Output)
-        const finalRes = await openai.chat.completions.create({
-          model: MODEL,
-          messages: [
-            {
-              role: "system",
-              content: `Make this sound like it was typed quickly by a confident expert on a MacBook. 
-- Use simple, direct language. 
-- Vary sentence length—use very short sentences next to longer ones. 
-- Start the hook immediately with a direct answer to their problem.
-- Keep the follow-up to exactly one casual sentence.
-Return the final output as a strict JSON object: { "hook": "...", "proposal": "...", "followUp": "..." }.`,
-            },
-            { role: "user", content: filteredDraft || "" },
-          ],
-          response_format: { type: "json_object" },
           temperature: 0.8,
         });
+        const finalDraft = debotRes.choices[0].message.content || "";
 
-        const resultJson = JSON.parse(
-          finalRes.choices[0].message.content || "{}"
-        );
+        // Robust Regex Parsing
+        const hookMatch = finalDraft.match(/HOOK:\s*([\s\S]*?)(?=PROPOSAL:|$)/i);
+        const proposalMatch = finalDraft.match(/PROPOSAL:\s*([\s\S]*?)(?=FOLLOW_UP:|$)/i);
+        const followUpMatch = finalDraft.match(/FOLLOW_UP:\s*([\s\S]*?)$/i);
+
+        const resultJson = {
+          hook: hookMatch?.[1]?.trim() || "",
+          proposal: proposalMatch?.[1]?.trim() || "",
+          followUp: followUpMatch?.[1]?.trim() || "",
+        };
 
         if (resultJson.hook && resultJson.proposal && resultJson.followUp) {
           // Success: Update usage count
@@ -187,8 +155,9 @@ Return the final output as a strict JSON object: { "hook": "...", "proposal": ".
           return NextResponse.json(resultJson);
         }
 
-        throw new Error("AI returned malformed JSON structure");
+        throw new Error("AI output parsing failed - sections missing");
       } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
         lastError = err instanceof Error ? err : new Error(String(err));
         attempt++;
         if (attempt <= maxRetries) {

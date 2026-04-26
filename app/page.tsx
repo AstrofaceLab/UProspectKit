@@ -629,21 +629,40 @@ export default function Home() {
             }}
           >
             <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-display)",
-                  marginBottom: "8px",
-                }}
-              >
-                Job Post
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <label
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "var(--text-secondary)",
+                    fontFamily: "var(--font-display)",
+                  }}
+                >
+                  Job Post
+                </label>
+                <button
+                  onClick={() => setJobPost("We are looking for a Senior React/Next.js Developer to help us build a high-performance SaaS platform. \n\nYou will be responsible for implementing complex UI components using Tailwind CSS, managing global state with TanStack Query, and optimizing the application for core web vitals. \n\nThe ideal candidate has 5+ years of experience with modern JavaScript frameworks and a strong understanding of Server Components and the App Router architecture.")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--accent)",
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "var(--font-mono)",
+                    textDecoration: "underline",
+                    opacity: 0.8,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.opacity = "1"}
+                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.opacity = "0.8"}
+                >
+                  TRY AN EXAMPLE
+                </button>
+              </div>
               <textarea
+                autoFocus
                 value={jobPost}
                 onChange={(e) => setJobPost(e.target.value)}
                 placeholder="Paste the Upwork job description here..."
@@ -763,66 +782,68 @@ export default function Home() {
               )}
             </div>
 
-            <PaystackUpgradeButton
-              email={session?.user?.email || ""}
-              amount={900}
-              publicKey={process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ""}
-              plan={process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE}
-              upgrading={upgrading}
-              setUpgrading={setUpgrading}
-              onSuccess={onSuccess}
-              className={loading ? "pulse" : ""}
-              style={{
-                width: "100%",
-                padding: "16px",
-                background: isDisabled ? "var(--bg-card)" : "var(--accent)",
-                color: isDisabled ? "var(--text-muted)" : "#000",
-                border: isDisabled ? "1px solid var(--border)" : "none",
-                borderRadius: "var(--radius-md)",
-                fontSize: "15px",
-                fontWeight: 700,
-                fontFamily: "var(--font-display)",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "12px",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                boxShadow: isDisabled ? "none" : "0 8px 24px var(--accent-glow)",
-              }}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner" />
-                  Generating...
-                </>
-              ) : !isProUser && usageCount >= FREE_LIMIT ? (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
-                  </svg>
-                  Upgrade to Continue
-                </>
-              ) : (
-                <>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 14 14"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M7 1v12M1 7h12"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  Generate Proposal
-                </>
-              )}
-            </PaystackUpgradeButton>
+            <div className="mobile-cta-wrapper">
+              <PaystackUpgradeButton
+                email={session?.user?.email || ""}
+                amount={900}
+                publicKey={process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ""}
+                plan={process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE}
+                upgrading={upgrading}
+                setUpgrading={setUpgrading}
+                onSuccess={onSuccess}
+                className={loading ? "pulse" : ""}
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  background: isDisabled ? "var(--bg-card)" : "var(--accent)",
+                  color: isDisabled ? "var(--text-muted)" : "#000",
+                  border: isDisabled ? "1px solid var(--border)" : "none",
+                  borderRadius: "var(--radius-md)",
+                  fontSize: "15px",
+                  fontWeight: 700,
+                  fontFamily: "var(--font-display)",
+                  cursor: isDisabled ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "12px",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: isDisabled ? "none" : "0 8px 24px var(--accent-glow)",
+                }}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner" />
+                    Generating...
+                  </>
+                ) : !isProUser && usageCount >= FREE_LIMIT ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
+                    </svg>
+                    Upgrade to Continue
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M7 1v12M1 7h12"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    Generate Proposal
+                  </>
+                )}
+              </PaystackUpgradeButton>
+            </div>
 
             {/* Error state */}
             {error && (
@@ -1075,8 +1096,9 @@ export default function Home() {
         </div>
 
         {/* ── SAVED PROPOSALS ── */}
-        <div style={{ marginTop: "100px" }}> {/* Increased from 80px */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "40px" }}> {/* Increased from 32px */}
+        {history.length > 0 && (
+          <div style={{ marginTop: "100px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "40px" }}> {/* Increased from 32px */}
             <h2
               style={{
                 fontFamily: "var(--font-display)",
@@ -1200,8 +1222,8 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* ── SEO Content Section ── */}
         <section 
