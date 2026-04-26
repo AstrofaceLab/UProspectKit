@@ -476,7 +476,7 @@ export default function Home() {
 
     setUpgrading(true);
     try {
-      initializePayment(onSuccess, onClose);
+      initializePayment({ onSuccess, onClose });
     } catch (err) {
       console.error("Paystack initialization error:", err);
       toast.error("Failed to initialize payment");
