@@ -5,6 +5,7 @@ import * as Select from "@radix-ui/react-select";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { usePaystackPayment } from "react-paystack";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -349,14 +350,28 @@ export default function Home() {
 
   const FREE_LIMIT = 5;
 
-  // Initialize Paddle v2 on mount
-  useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).Paddle) {
-      (window as any).Paddle.Initialize({
-        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-      });
-    }
-  }, []);
+  // Paystack Configuration
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: session?.user?.email || "",
+    amount: 900, // $9.00 in kobo (Paystack uses minor units)
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+    plan: process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE, // Optional: for subscriptions
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = (reference: any) => {
+    toast.success("Payment successful! Upgrading account...");
+    // Poll or refresh to reflect isPro status
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  };
+
+  const onClose = () => {
+    setUpgrading(false);
+  };
 
   // Load history from API on mount/session change
   useEffect(() => {
@@ -454,26 +469,18 @@ export default function Home() {
 
   const handleUpgrade = () => {
     if (upgrading) return;
+    if (!session?.user?.id) {
+      signIn("google");
+      return;
+    }
+
     setUpgrading(true);
     try {
-      if (typeof window !== "undefined" && (window as any).Paddle && session?.user?.id) {
-        (window as any).Paddle.Checkout.open({
-          items: [
-            {
-              priceId: process.env.NEXT_PUBLIC_PADDLE_PRODUCT_ID!,
-              quantity: 1,
-            },
-          ],
-          customData: {
-            userId: session.user.id,
-          },
-        });
-      } else {
-        signIn("google");
-      }
-    } finally {
-      // Reset after a short delay (checkout opens in overlay)
-      setTimeout(() => setUpgrading(false), 2000);
+      initializePayment(onSuccess, onClose);
+    } catch (err) {
+      console.error("Paystack initialization error:", err);
+      toast.error("Failed to initialize payment");
+      setUpgrading(false);
     }
   };
 

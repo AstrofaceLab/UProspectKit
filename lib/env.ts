@@ -10,12 +10,13 @@ const required = [
   "NEXTAUTH_SECRET",
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
+  "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY",
+  "PAYSTACK_SECRET_KEY",
 ] as const;
 
 const optional = [
-  "PADDLE_API_KEY",
-  "PADDLE_WEBHOOK_SECRET",
   "DIRECT_URL",
+  "NEXT_PUBLIC_PAYSTACK_PLAN_CODE",
 ] as const;
 
 const missing = required.filter((key) => !process.env[key]);

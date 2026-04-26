@@ -34,16 +34,18 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  isPro         Boolean   @default(false)
-  usageCount    Int       @default(0)
-  accounts      Account[]
-  sessions      Session[]
-  proposals     Proposal[]
+  id                 String    @id @default(cuid())
+  name               String?
+  email              String?   @unique
+  emailVerified      DateTime?
+  image              String?
+  isPro              Boolean   @default(false)
+  usageCount         Int       @default(0)
+  paystackCustomerId String?
+  paystackPlan       String?
+  accounts           Account[]
+  sessions           Session[]
+  proposals          Proposal[]
 }
 
 model VerificationToken {
