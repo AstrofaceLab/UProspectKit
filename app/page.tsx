@@ -583,7 +583,7 @@ export default function Home() {
               fontWeight: 800,
               fontSize: "clamp(32px, 6vw, 48px)",
               color: "var(--text-primary)",
-              margin: "0 0 16px",
+              margin: "0 0 24px", /* Increased from 16px */
               letterSpacing: "-0.03em",
               lineHeight: 1.1,
             }}
@@ -596,8 +596,8 @@ export default function Home() {
               fontSize: "clamp(15px, 2vw, 18px)",
               fontFamily: "var(--font-body)",
               maxWidth: "600px",
-              margin: "0 auto",
-              lineHeight: "1.6",
+              margin: "0 auto 32px", /* Added bottom margin */
+              lineHeight: "1.7",
             }}
           >
             Transform job descriptions into high-converting, human-sounding proposals. Tailored to your experience and tone.
@@ -610,7 +610,7 @@ export default function Home() {
           style={{
             display: "grid",
             gridTemplateColumns: "400px 1fr",
-            gap: "32px",
+            gap: "40px", /* Increased from 32px */
             alignItems: "start",
             width: "100%",
             boxSizing: "border-box",
@@ -1075,8 +1075,8 @@ export default function Home() {
         </div>
 
         {/* ── SAVED PROPOSALS ── */}
-        <div style={{ marginTop: "80px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px" }}>
+        <div style={{ marginTop: "100px" }}> {/* Increased from 80px */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "40px" }}> {/* Increased from 32px */}
             <h2
               style={{
                 fontFamily: "var(--font-display)",
@@ -1203,11 +1203,11 @@ export default function Home() {
           )}
         </div>
 
-        {/* ── SEO Content Section (Visually subtle but crawlable) ── */}
+        {/* ── SEO Content Section ── */}
         <section 
           style={{ 
-            marginTop: "120px", 
-            padding: "60px 0", 
+            marginTop: "160px", /* Increased from 120px */
+            padding: "80px 0", /* Increased from 60px */
             borderTop: "1px solid var(--border)",
             opacity: 0.8
           }}

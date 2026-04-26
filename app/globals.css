@@ -43,9 +43,22 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.7; /* Slightly increased for better readability */
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+p {
+  line-height: 1.75;
+  color: var(--text-secondary);
 }
 
 .container {
