@@ -5,7 +5,11 @@ import * as Select from "@radix-ui/react-select";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { usePaystackPayment } from "react-paystack";
+import dynamic from "next/dynamic";
+
+const PaystackUpgradeButton = dynamic(() => import("@/components/PaystackUpgradeButton"), {
+  ssr: false,
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -350,27 +354,12 @@ export default function Home() {
 
   const FREE_LIMIT = 5;
 
-  // Paystack Configuration
-  const config = {
-    reference: (new Date()).getTime().toString(),
-    email: session?.user?.email || "",
-    amount: 900, // $9.00 in kobo (Paystack uses minor units)
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
-    plan: process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE, // Optional: for subscriptions
-  };
-
-  const initializePayment = usePaystackPayment(config);
-
-  const onSuccess = (reference: any) => {
+  const onSuccess = () => {
     toast.success("Payment successful! Upgrading account...");
     // Poll or refresh to reflect isPro status
     setTimeout(() => {
       window.location.reload();
     }, 2000);
-  };
-
-  const onClose = () => {
-    setUpgrading(false);
   };
 
   // Load history from API on mount/session change
@@ -467,22 +456,7 @@ export default function Home() {
     }
   };
 
-  const handleUpgrade = () => {
-    if (upgrading) return;
-    if (!session?.user?.id) {
-      signIn("google");
-      return;
-    }
-
-    setUpgrading(true);
-    try {
-      initializePayment({ onSuccess, onClose });
-    } catch (err) {
-      console.error("Paystack initialization error:", err);
-      toast.error("Failed to initialize payment");
-      setUpgrading(false);
-    }
-  };
+  // handleUpgrade is now managed inside PaystackUpgradeButton component
 
   const isDisabled = loading || !jobPost.trim();
 
@@ -789,17 +763,19 @@ export default function Home() {
               )}
             </div>
 
-            {/* Generate button */}
-            <button
-              onClick={handleGenerate}
-              disabled={isDisabled}
+            <PaystackUpgradeButton
+              email={session?.user?.email || ""}
+              amount={900}
+              publicKey={process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ""}
+              plan={process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE}
+              upgrading={upgrading}
+              setUpgrading={setUpgrading}
+              onSuccess={onSuccess}
               className={loading ? "pulse" : ""}
               style={{
                 width: "100%",
                 padding: "16px",
-                background: isDisabled
-                  ? "var(--bg-card)"
-                  : "var(--accent)",
+                background: isDisabled ? "var(--bg-card)" : "var(--accent)",
                 color: isDisabled ? "var(--text-muted)" : "#000",
                 border: isDisabled ? "1px solid var(--border)" : "none",
                 borderRadius: "var(--radius-md)",
@@ -813,20 +789,6 @@ export default function Home() {
                 gap: "12px",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 boxShadow: isDisabled ? "none" : "0 8px 24px var(--accent-glow)",
-              }}
-              onMouseEnter={(e) => {
-                if (!isDisabled) {
-                  (e.currentTarget as HTMLElement).style.background = "#fff";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 30px rgba(255,255,255,0.2)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isDisabled) {
-                  (e.currentTarget as HTMLElement).style.background = "var(--accent)";
-                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-                  (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px var(--accent-glow)";
-                }
               }}
             >
               {loading ? (
@@ -860,7 +822,7 @@ export default function Home() {
                   Generate Proposal
                 </>
               )}
-            </button>
+            </PaystackUpgradeButton>
 
             {/* Error state */}
             {error && (
@@ -1412,9 +1374,14 @@ export default function Home() {
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <button
-                onClick={handleUpgrade}
-                disabled={upgrading}
+              <PaystackUpgradeButton
+                email={session?.user?.email || ""}
+                amount={900}
+                publicKey={process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ""}
+                plan={process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE}
+                upgrading={upgrading}
+                setUpgrading={setUpgrading}
+                onSuccess={onSuccess}
                 style={{
                   width: "100%",
                   padding: "18px",
@@ -1436,7 +1403,7 @@ export default function Home() {
               >
                 {upgrading && <span className="spinner" />}
                 {upgrading ? "Loading..." : "Unlock Pro — $9/mo"}
-              </button>
+              </PaystackUpgradeButton>
               <button
                 onClick={() => setShowPaywall(false)}
                 style={{
